@@ -11,13 +11,15 @@ typedef struct{
 }Array;
 Array array;
 
-pthread_mutex_t lock;
+pthread_mutex_t lock1;
+pthread_mutex_t lock2;
 
 pthread_t insertThread, deleteThread, searchThread;
 
 void* insert(void* arg){
 	int val = *(int*)arg;
-	pthread_mutex_lock(&lock);	
+	pthread_mutex_lock(&lock1);	
+	pthread_mutex_lock(&lock2);	
 	 if(array.size < MAX_SIZE){
 	  array.arr[array.size] = val;
 	  array.size++;
@@ -27,7 +29,8 @@ void* insert(void* arg){
 	  printf("Array size is maxout so can not be inserted\n");
 
 	 }
-	pthread_mutex_unlock(&lock);
+	pthread_mutex_unlock(&lock2);	
+	pthread_mutex_unlock(&lock1);	
 	 return NULL;
 }
 
@@ -37,7 +40,8 @@ void* insert(void* arg){
 void* delete(void* arg){
  int val = *(int*)arg;
  bool found = false;
-	pthread_mutex_lock(&lock);	
+	pthread_mutex_lock(&lock2);	
+	pthread_mutex_lock(&lock1);	
  for(int i = 0; i < array.size; i++){
 
 	if(val == array.arr[i]){
@@ -58,14 +62,15 @@ void* delete(void* arg){
 	else{
 		printf("We can not founda and delete item: %d\n", val);
 	} 
-	pthread_mutex_unlock(&lock);
+	pthread_mutex_unlock(&lock1);	
+	pthread_mutex_unlock(&lock2);	
  	return NULL;
  
 }
 
 void* search(void* arg){
 	int val = *(int*)arg;
-	pthread_mutex_lock(&lock);
+	pthread_mutex_lock(&lock1);
 	bool found = false;
 	for(int i = 0; i < array.size; i++){
 		if(array.arr[i] == val){
@@ -79,7 +84,7 @@ void* search(void* arg){
 	else{
 		printf("we have not found our element in array\n");
 	}
-	pthread_mutex_unlock(&lock);
+	pthread_mutex_unlock(&lock1);
 	return NULL;
 
 }
@@ -87,7 +92,8 @@ void* search(void* arg){
 
 int main(){
 	array.size = 0;
-	pthread_mutex_init(&lock, NULL);
+	pthread_mutex_init(&lock1, NULL);
+	pthread_mutex_init(&lock2, NULL);
 
 	int inserVal = 10;
 	int searchVal = 40;
@@ -103,7 +109,8 @@ int main(){
  	pthread_join(deleteThread, NULL);
 
 
- 	pthread_mutex_destroy(&lock);
+ 	pthread_mutex_destroy(&lock1);
+ 	pthread_mutex_destroy(&lock2);
 
 	
 	
