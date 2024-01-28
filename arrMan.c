@@ -10,20 +10,25 @@ typedef struct{
   int size;
 }Array;
 Array array;
+
+pthread_mutex_t lock;
+
 pthread_t insertThread, deleteThread, searchThread;
 
 void* insert(void* arg){
 	int val = *(int*)arg;
- if(array.size < MAX_SIZE){
-  array.arr[array.size] = val;
-  array.size++;
-  printf("\nFor Insert:-   new Element %d is added\n", val);
- }
- else{
-  printf("Array size is maxout so can not be inserted\n");
+	pthread_mutex_lock(&lock);	
+	 if(array.size < MAX_SIZE){
+	  array.arr[array.size] = val;
+	  array.size++;
+	  printf("\nFor Insert:-   new Element %d is added\n", val);
+	 }
+	 else{
+	  printf("Array size is maxout so can not be inserted\n");
 
- }
- return NULL;
+	 }
+	pthread_mutex_unlock(&lock);
+	 return NULL;
 }
 
 
@@ -32,6 +37,7 @@ void* insert(void* arg){
 void* delete(void* arg){
  int val = *(int*)arg;
  bool found = false;
+	pthread_mutex_lock(&lock);	
  for(int i = 0; i < array.size; i++){
 
 	if(val == array.arr[i]){
@@ -52,12 +58,14 @@ void* delete(void* arg){
 	else{
 		printf("We can not founda and delete item: %d\n", val);
 	} 
+	pthread_mutex_unlock(&lock);
  	return NULL;
  
 }
 
 void* search(void* arg){
 	int val = *(int*)arg;
+	pthread_mutex_lock(&lock);
 	bool found = false;
 	for(int i = 0; i < array.size; i++){
 		if(array.arr[i] == val){
@@ -71,35 +79,34 @@ void* search(void* arg){
 	else{
 		printf("we have not found our element in array\n");
 	}
+	pthread_mutex_unlock(&lock);
 	return NULL;
 
 }
 
-/*
-void display(Array* array){
- printf("The array's Data is:\n");
- for(int i = 0; i < array->size; i++){
-     printf("%d ",array->arr[i]);
-
- }
- return;
-
-}
-*/
 
 int main(){
- array.size = 0;
+	array.size = 0;
+	pthread_mutex_init(&lock, NULL);
+
 	int inserVal = 10;
 	int searchVal = 40;
 	int deleteVal = 10;
 	inserVal = 40;
 	pthread_create(&insertThread, NULL, insert, &inserVal);
-	pthread_create(&searchThread, NULL, search, &searchVal);
- 	pthread_create(&deleteThread, NULL, delete, &deleteVal);
-
-
 	pthread_join(insertThread, NULL);
-	pthread_join(deleteThread, NULL);
 
+	pthread_create(&searchThread, NULL, search, &searchVal);
+	pthread_join(searchThread, NULL);
+
+ 	pthread_create(&deleteThread, NULL, delete, &deleteVal);
+ 	pthread_join(deleteThread, NULL);
+
+
+ 	pthread_mutex_destroy(&lock);
+
+	
+	
+	
  return 0;
 }
